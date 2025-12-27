@@ -1,111 +1,448 @@
-/* ============================================================
-   FIX COMPLETO: INTRO + STANDBY + REBOOT + DOCK + OMBRE + SFONDO
-   ============================================================ */
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
 
-/* ------------------------------
-   SFONDO DESKTOP
------------------------------- */
+body {
+  background: #1a1a1a;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* ===== OS ROOT ===== */
 #os {
-  background: linear-gradient(135deg, #0f0f0f, #1c1c1c, #111);
-  background-size: cover;
-  background-position: center;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
-/* ------------------------------
-   OMBRA SU ICONE E NOMI
------------------------------- */
-.icon-image {
-  text-shadow: 0 2px 6px rgba(0,0,0,0.45);
-}
-
-.icon-label {
-  text-shadow: 0 1px 4px rgba(0,0,0,0.45);
-}
-
-/* ------------------------------
-   INTRO (SPLASH)
------------------------------- */
+/* ===== SPLASH ===== */
 #splash {
-  position: fixed;      /* deve coprire tutto */
+  position: fixed;
   inset: 0;
-  display: flex;
-  justify-content: center;
+  background: #000;
+  color: white;
+  display: none;
   align-items: center;
-  flex-direction: column;
-  z-index: 9999;        /* sopra tutto */
+  justify-content: center;
+  z-index: 9999;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity .6s ease;
+  transition: opacity 0.6s ease;
 }
 
 #splash.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* ------------------------------
-   BLACK SCREEN (STANDBY / REBOOT)
------------------------------- */
-#black-screen {
-  position: fixed;
-  inset: 0;
-  background: black;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9998;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .4s ease;
-}
-
-#black-screen.visible {
   opacity: 1;
-  pointer-events: auto;
 }
 
-.black-icon {
-  font-size: 70px;
+.splash-title {
+  font-size: 42px;
+  font-weight: bold;
   text-align: center;
 }
 
-/* ------------------------------
-   STANDBY OVERLAY
------------------------------- */
+.splash-powered {
+  margin-top: 10px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.splash-beta {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+/* ===== BLACK SCREEN (REBOOT / STANDBY) ===== */
+#black-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+#black-screen.visible {
+  display: flex;
+  opacity: 1;
+}
+
+.black-title {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.black-icon {
+  font-size: 60px;
+  text-align: center;
+}
+
+/* ===== STANDBY ===== */
 #standby-message {
   position: fixed;
   inset: 0;
-  background: black;
-  display: flex;
-  justify-content: center;
+  background: #000;
+  color: white;
+  display: none;
   align-items: center;
-  z-index: 9999;
+  justify-content: center;
+  z-index: 9997;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity .4s ease;
+  transition: opacity 0.4s ease;
 }
 
 #standby-message.visible {
+  display: flex;
   opacity: 1;
-  pointer-events: auto;   /* ora riceve il tocco */
 }
 
 .standby-text {
   font-size: 20px;
   text-align: center;
-  max-width: 80%;
+  padding: 20px;
 }
 
-/* ------------------------------
-   DOCK (ALZATO)
------------------------------- */
+/* ===== DESKTOP ===== */
+#desktop {
+  position: absolute;
+  inset: 0;
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  align-content: flex-start;
+}
+
+.icon {
+  width: 70px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.icon-image {
+  font-size: 40px;
+}
+
+.icon-label {
+  margin-top: 5px;
+  font-size: 14px;
+  color: white;
+}
+
+/* ===== DOCK ===== */
 #dock {
-  bottom: calc(40px + env(safe-area-inset-bottom));
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 30, 0.8);
+  padding: 10px 20px;
+  border-radius: 20px;
+  display: flex;
+  gap: 15px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
 }
 
-/* ------------------------------
-   TASKBAR (ALZATA)
------------------------------- */
+.dock-item {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* ===== TASKBAR ===== */
 #taskbar {
-  bottom: env(safe-area-inset-bottom);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 40px;
+  width: 100%;
+  background: #111;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 60;
+}
+
+#start-button {
+  font-size: 20px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+#taskbar-apps {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+}
+
+.taskbar-item {
+  background: #222;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+}
+
+.taskbar-item.active {
+  background: #444;
+}
+
+#clock {
+  color: white;
+  font-size: 14px;
+}
+
+/* ===== START MENU ===== */
+#start-menu {
+  position: fixed;
+  bottom: 40px;
+  left: 10px;
+  width: 220px;
+  background: #222;
+  border-radius: 8px;
+  padding: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 70;
+}
+
+#start-menu.open {
+  display: flex;
+}
+
+.start-title {
+  color: white;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.start-apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.start-app {
+  width: 45px;
+  height: 45px;
+  background: #333;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.start-power-section {
+  margin-top: 10px;
+}
+
+.start-power-title {
+  color: white;
+  margin-bottom: 5px;
+}
+
+.start-power {
+  width: 100%;
+  background: #333;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ===== WINDOWS ===== */
+.window {
+  position: absolute;
+  width: 380px;
+  height: 300px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 6px;
+  display: none;
+  flex-direction: column;
+  z-index: 10;
+  color: white;
+}
+
+.window.active {
+  border-color: #888;
+}
+
+.window.fullscreen {
+  width: 100vw !important;
+  height: calc(100vh - 40px) !important;
+  top: 0 !important;
+  left: 0 !important;
+  border-radius: 0 !important;
+}
+
+.window-titlebar {
+  background: #333;
+  padding: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: grab;
+}
+
+.window-buttons button {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+.window-content {
+  flex: 1;
+  padding: 10px;
+  overflow: auto;
+}
+
+/* Notes */
+.notes-area {
+  width: 100%;
+  height: 100%;
+  background: #111;
+  color: white;
+  border: none;
+  padding: 10px;
+  resize: none;
+}
+
+/* Browser */
+.browser-url {
+  width: 100%;
+  padding: 6px;
+  background: #111;
+  color: white;
+  border: none;
+  margin-bottom: 10px;
+}
+
+/* File Manager */
+.file-manager {
+  display: flex;
+  height: 100%;
+}
+
+.fm-sidebar {
+  width: 100px;
+  background: #111;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fm-nav-item {
+  background: #222;
+  border: none;
+  padding: 8px;
+  color: white;
+  cursor: pointer;
+}
+
+.fm-main {
+  flex: 1;
+  padding: 10px;
+}
+
+.fm-list {
+  margin-top: 10px;
+}
+
+/* Music */
+.music-info {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.music-cover {
+  font-size: 40px;
+}
+
+.music-controls {
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.btn-music {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.music-progress {
+  width: 100%;
+  height: 6px;
+  background: #444;
+  margin-top: 20px;
+  border-radius: 3px;
+}
+
+.music-progress-bar {
+  width: 0%;
+  height: 100%;
+  background: #0f8;
+  border-radius: 3px;
+}
+
+/* Terminal */
+.terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.terminal-output {
+  flex: 1;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: monospace;
+  padding: 5px;
+}
+
+.terminal-input-row {
+  display: flex;
+  padding: 5px;
+  background: #111;
+}
+
+.terminal-input {
+  flex: 1;
+  background: #000;
+  color: white;
+  border: none;
+  padding: 5px;
+  font-family: monospace;
+}
+
+/* About */
+.about {
+  color: white;
 }
