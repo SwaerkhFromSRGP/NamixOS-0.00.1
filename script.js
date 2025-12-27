@@ -2,7 +2,7 @@
    BASIC STATE
 =========================== */
 const icons = document.querySelectorAll(".icon");
-const windows = document.querySelectorAll(".window");
+const windowsEls = document.querySelectorAll(".window");
 const taskbar = document.getElementById("taskbar-apps");
 const clock = document.getElementById("clock");
 const startButton = document.getElementById("start-button");
@@ -10,13 +10,19 @@ const startMenu = document.getElementById("start-menu");
 const startApps = document.querySelectorAll(".start-app");
 const startPowerButtons = document.querySelectorAll(".start-power");
 const dockItems = document.querySelectorAll(".dock-item");
+const dockRecent = document.getElementById("dock-recent");
+const dockDivider = document.getElementById("dock-divider");
 const splash = document.getElementById("splash");
 const blackScreen = document.getElementById("black-screen");
 const blackIcon = document.getElementById("black-icon");
 const standbyOverlay = document.getElementById("standby-message");
+const contextMenu = document.getElementById("context-menu");
+const ctxItems = document.querySelectorAll(".ctx-item");
 
 let zIndexCounter = 500;
 let isInStandby = false;
+let recentApps = []; // track up to 2 recent app IDs
+let ctxTargetWindowId = null;
 
 /* ===========================
    WINDOW MANAGEMENT
@@ -28,17 +34,19 @@ function openWindow(id) {
   win.style.display = "flex";
   focusWindow(win);
 
-  // Mobile fullscreen
   if (window.innerWidth <= 700) {
     win.classList.add("fullscreen");
   }
 
   addToTaskbar(id);
+  updateRecentApps(id);
 }
 
 function closeWindow(win) {
   win.style.display = "none";
   removeFromTaskbar(win.id);
+  removeFromRecent(win.id);
+  updateDockRecent();
 }
 
 function minimizeWindow(win) {
@@ -48,7 +56,7 @@ function minimizeWindow(win) {
 function focusWindow(win) {
   zIndexCounter++;
   win.style.zIndex = zIndexCounter;
-  windows.forEach(w => w.classList.remove("active"));
+  windowsEls.forEach(w => w.classList.remove("active"));
   win.classList.add("active");
 }
 
@@ -62,7 +70,15 @@ function addToTaskbar(id) {
   item.className = "taskbar-item";
   item.dataset.window = id;
   item.textContent = id.replace("win-", "");
-  item.addEventListener("click", () => openWindow(id));
+  item.addEventListener("click", () => {
+    const win = document.getElementById(id);
+    if (!win) return;
+    if (win.style.display === "none" || win.style.display === "") {
+      openWindow(id);
+    } else {
+      focusWindow(win);
+    }
+  });
   taskbar.appendChild(item);
 }
 
@@ -72,17 +88,87 @@ function removeFromTaskbar(id) {
 }
 
 /* ===========================
+   RECENT APPS IN DOCK
+=========================== */
+function updateRecentApps(id) {
+  // don't track browser/files/terminal separately if they are already in main dock, but user asked: separate “used apps”
+  if (!recentApps.includes(id)) {
+    recentApps.unshift(id);
+    if (recentApps.length > 2) recentApps.pop();
+  }
+  updateDockRecent();
+}
+
+function removeFromRecent(id) {
+  recentApps = recentApps.filter(x => x !== id);
+}
+
+function updateDockRecent() {
+  dockRecent.innerHTML = "";
+
+  if (recentApps.length === 0) {
+    dockDivider.style.display = "none";
+    return;
+  }
+
+  dockDivider.style.display = "block";
+
+  recentApps.forEach(id => {
+    const btn = document.createElement("button");
+    btn.className = "dock-recent-item";
+    btn.dataset.window = id;
+
+    // choose symbol based on window
+    let symbol = "□";
+    if (id === "win-browser") symbol = "🌐";
+    else if (id === "win-files") symbol = "🗂️";
+    else if (id === "win-terminal") symbol = ">_";
+    else if (id === "win-notes") symbol = "📝";
+    else if (id === "win-about") symbol = "OS";
+    else if (id === "win-settings") symbol = "⚙️";
+
+    btn.textContent = symbol;
+
+    const dot = document.createElement("div");
+    dot.className = "dock-indicator";
+    btn.appendChild(dot);
+
+    btn.addEventListener("click", () => openWindow(id));
+
+    // context menu
+    attachContextMenuHandlers(btn, id);
+
+    dockRecent.appendChild(btn);
+  });
+}
+
+/* ===========================
    ICONS & DOCK
 =========================== */
 icons.forEach(icon => {
-  icon.addEventListener("dblclick", () => openWindow(icon.dataset.window));
+  // locked browser: no window
+  if (icon.classList.contains("locked-browser")) {
+    icon.addEventListener("click", () => {
+      // optional feedback, left empty for clean UI
+    });
+    return;
+  }
+
+  const target = icon.dataset.window;
+  if (!target) return;
+
+  icon.addEventListener("dblclick", () => openWindow(target));
+
   icon.addEventListener("click", () => {
-    if (window.innerWidth <= 700) openWindow(icon.dataset.window);
+    if (window.innerWidth <= 700) openWindow(target);
   });
 });
 
 dockItems.forEach(btn => {
-  btn.addEventListener("click", () => openWindow(btn.dataset.window));
+  const winId = btn.dataset.window;
+  btn.addEventListener("click", () => openWindow(winId));
+
+  attachContextMenuHandlers(btn, winId);
 });
 
 /* ===========================
@@ -95,6 +181,7 @@ startButton.addEventListener("click", e => {
 
 document.addEventListener("click", () => {
   startMenu.classList.remove("open");
+  hideContextMenu();
 });
 
 startApps.forEach(btn => {
@@ -107,7 +194,7 @@ startApps.forEach(btn => {
 /* ===========================
    WINDOW BUTTONS + DRAG
 =========================== */
-windows.forEach(win => {
+windowsEls.forEach(win => {
   const btnClose = win.querySelector(".btn-close");
   const btnMin = win.querySelector(".btn-minimize");
   const btnFull = win.querySelector(".btn-fullscreen");
@@ -117,7 +204,6 @@ windows.forEach(win => {
   if (btnMin) btnMin.addEventListener("click", () => minimizeWindow(win));
   if (btnFull) btnFull.addEventListener("click", () => win.classList.toggle("fullscreen"));
 
-  // Drag
   let dragging = false;
   let offsetX = 0;
   let offsetY = 0;
@@ -138,6 +224,62 @@ windows.forEach(win => {
   });
 
   document.addEventListener("mouseup", () => dragging = false);
+});
+
+/* ===========================
+   CONTEXT MENU
+=========================== */
+function attachContextMenuHandlers(element, windowId) {
+  // right-click
+  element.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    showContextMenu(e.clientX, e.clientY, windowId);
+  });
+
+  // long press on touch
+  let pressTimer = null;
+
+  element.addEventListener("touchstart", e => {
+    pressTimer = setTimeout(() => {
+      const touch = e.touches[0];
+      showContextMenu(touch.clientX, touch.clientY, windowId);
+    }, 500);
+  });
+
+  element.addEventListener("touchend", () => {
+    if (pressTimer) clearTimeout(pressTimer);
+  });
+
+  element.addEventListener("touchmove", () => {
+    if (pressTimer) clearTimeout(pressTimer);
+  });
+}
+
+function showContextMenu(x, y, windowId) {
+  ctxTargetWindowId = windowId;
+  contextMenu.style.display = "flex";
+  contextMenu.style.left = x + "px";
+  contextMenu.style.top = y + "px";
+}
+
+function hideContextMenu() {
+  contextMenu.style.display = "none";
+  ctxTargetWindowId = null;
+}
+
+ctxItems.forEach(item => {
+  item.addEventListener("click", () => {
+    if (!ctxTargetWindowId) return;
+
+    const win = document.getElementById(ctxTargetWindowId);
+    const action = item.dataset.action;
+
+    if (action === "close" && win) closeWindow(win);
+    if (action === "open") openWindow(ctxTargetWindowId);
+    if (action === "hide" && win) minimizeWindow(win);
+
+    hideContextMenu();
+  });
 });
 
 /* ===========================
@@ -181,7 +323,7 @@ function showBlack(icon, duration, callback) {
 }
 
 function enterStandby() {
-  windows.forEach(w => w.style.display = "none");
+  windowsEls.forEach(w => w.style.display = "none");
 
   showBlack("⏸", 1500, () => {
     standbyOverlay.style.display = "flex";
@@ -203,8 +345,7 @@ function wakeFromStandby() {
 standbyOverlay.addEventListener("click", wakeFromStandby);
 
 function enterReboot() {
-  windows.forEach(w => w.style.display = "none");
-
+  windowsEls.forEach(w => w.style.display = "none");
   showBlack("🔄", 1500, () => playSplash(() => {}));
 }
 
@@ -220,7 +361,7 @@ startPowerButtons.forEach(btn => {
 =========================== */
 function mobileMode() {
   const isMobile = window.innerWidth <= 700;
-  windows.forEach(win => {
+  windowsEls.forEach(win => {
     if (win.style.display !== "none") {
       win.classList.toggle("fullscreen", isMobile);
     }
