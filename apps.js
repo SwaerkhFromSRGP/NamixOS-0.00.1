@@ -1,7 +1,6 @@
 /* ===========================
    FILE MANAGER
 =========================== */
-
 const fileSystem = {
   home: ["notes.txt", "todo.txt", "image.png"],
   documents: ["project.docx", "resume.pdf"],
@@ -35,7 +34,6 @@ if (fmList && fmPath) {
 /* ===========================
    TERMINAL
 =========================== */
-
 const termOutput = document.getElementById("terminal-output");
 const termInput = document.querySelector(".terminal-input");
 
@@ -100,9 +98,8 @@ if (termInput && termOutput) {
 }
 
 /* ===========================
-   BROWSER WITH DUCKDUCKGO SEARCH
+   NAMIX SEARCH (DUCKDUCKGO)
 =========================== */
-
 const browserUrl = document.querySelector(".browser-url");
 const browserView = document.querySelector(".browser-view");
 
@@ -172,7 +169,6 @@ if (browserUrl) {
 /* ===========================
    SETTINGS: TABS
 =========================== */
-
 const tabs = document.querySelectorAll(".settings-tab");
 const pages = document.querySelectorAll(".settings-page");
 
@@ -188,9 +184,8 @@ const defaultPage = document.getElementById("settings-lang");
 if (defaultPage) defaultPage.classList.add("active");
 
 /* ===========================
-   WALLPAPERS (5 CSS + 3 IMAGES)
+   WALLPAPERS (CSS + IMMAGINI)
 =========================== */
-
 const wallpapers = [
   {
     type: "css",
@@ -216,6 +211,11 @@ const wallpapers = [
     type: "css",
     name: "SOLEN Rainbow",
     value: "linear-gradient(135deg, red, orange, yellow, green, cyan, blue, violet)"
+  },
+  {
+    type: "image",
+    name: "Wallpaper 1",
+    value: "wallpapers/wallpaper1.jpg"
   },
   {
     type: "image",
@@ -280,7 +280,6 @@ if (grid && desktop) {
     grid.appendChild(div);
   });
 
-  // applica selezione visuale se esiste un wallpaper salvato
   const saved = localStorage.getItem("namixos_wallpaper");
   if (saved) {
     try {
@@ -293,7 +292,6 @@ if (grid && desktop) {
       }
     } catch (e) {}
   } else {
-    // se non c'è nulla salvato, seleziona il primo (default)
     markSelectedThumb(0);
   }
 }
